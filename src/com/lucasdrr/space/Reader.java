@@ -67,28 +67,6 @@ public class Reader implements Runnable{
 	}
 
 	public TreeMap<String, String> getListContacts() {
-
-		Message register = new Message();
-		register.setRegister(1);
-
-		Message user = null;
-		register.latitude = new Float(0);
-		register.longitude = new Float(0);
-		do {
-			try {
-				user = (Message) this.space.read(register, null, 50);
-			} catch (RemoteException | UnusableEntryException
-					| TransactionException | InterruptedException e) {
-				e.printStackTrace();
-			}
-			if (user != null) {
-				if (!list.containsKey(user.sender)) {
-					System.out.println("Foi inserido o usuario "
-							+ user.sender);
-					list.put(user.sender, "online");
-				}
-			}
-		} while (user != null);
 		return list;
 	}
 
@@ -121,7 +99,7 @@ public class Reader implements Runnable{
 			while (true) {
 				
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(500);
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
