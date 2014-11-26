@@ -73,7 +73,7 @@ public class Chat {
 
 		JPanel panelMsg = new JPanel();
 		panelMsg.setBorder(new TitledBorder(null, "Mensagens", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panelMsg.setBounds(10, 92, 300, 267);
+		panelMsg.setBounds(10, 92, 360, 267);
 		frame.getContentPane().add(panelMsg);
 		panelMsg.setLayout(null);
 
@@ -82,7 +82,7 @@ public class Chat {
 		textAreaChat.setBounds(10, 23, 280, 266);
 
 		JScrollPane scrollPaneAreaChat = new JScrollPane(textAreaChat);
-		scrollPaneAreaChat.setBounds(10, 23, 280, 233);
+		scrollPaneAreaChat.setBounds(10, 23, 338, 233);
 		scrollPaneAreaChat.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		panelMsg.add(scrollPaneAreaChat);
 
