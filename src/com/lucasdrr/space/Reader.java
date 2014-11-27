@@ -1,6 +1,7 @@
 package com.lucasdrr.space;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 import net.jini.core.entry.UnusableEntryException;
@@ -17,11 +18,11 @@ public class Reader implements Runnable{
 
 	private ClientChat client;
 	private JavaSpace space;
-	private TreeMap<String, String> list;
+	private ArrayList<String> list;
 
 	public Reader(ClientChat client) {
 		this.client = client;
-		this.list = new TreeMap<String, String>();
+		this.list = new ArrayList<String>();
 	}
 
 	public void init() {
@@ -43,16 +44,13 @@ public class Reader implements Runnable{
 
 	@Override
 	public void run() {
-		Message lastMessage = new Message();
 		while (true) {
 			Message template = new Message();
 			template.setReceiver("All");
-			template.setRegister(0);
 			Message msg = null;
 			try {
-				msg = (Message) space.readIfExists(template, null, 50);
+				msg = (Message) space.read(template, null, Long.MAX_VALUE);
 				if (msg != null) {
-					lastMessage = msg;
 					if (!msg.getSender().equals(this.client.getNickName())) {
 						System.out.println("O usuario " + this.client.getNickName() + " recebeu a msg  de " +msg.getSender() + " foi " + msg.getMessage());
 						this.client.showMessage(msg);
@@ -66,10 +64,8 @@ public class Reader implements Runnable{
 		}
 	}
 
-	public TreeMap<String, String> getListContacts() {
-		return list;
-	}
-
+	//Distancia Euclidiana de latitude e longitude
+	//Fonte:http://wiki.sj.ifsc.edu.br/wiki/index.php/Fundamenta%C3%A7%C3%A3o_Te%C3%B3rica_do_Projeto_-_O_Sistema_GPS_e_m%C3%A9todos_para_c%C3%A1lculo_de_%C3%A1rea_e_dist%C3%A2ncia
 	private boolean distanceBetween(Float latitude, Float longitude,
 			Float latitude2, Float longitude2) {
 		int R = 6378000;
@@ -98,36 +94,65 @@ public class Reader implements Runnable{
 		public void run() {
 			while (true) {
 				
+				ArrayList<RegisterClient> listRegister = new ArrayList<RegisterClient>();
+				list = new ArrayList<String>();
 				try {
-					Thread.sleep(500);
+					Thread.sleep(120*1000);
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
 				
-				Message register = new Message();
-				register.setRegister(1);
-				Message user = null;
-				register.latitude = new Float(0);
-				register.longitude = new Float(0);
+				client.getWindow().getTextAreaVision().setText(null);
+				RegisterClient template = new RegisterClient();
+				RegisterClient otherUser = null;
 				do {
 					try {
-						user = (Message) space.read(register, null, 50);
-					} catch (RemoteException | UnusableEntryException
-							| TransactionException | InterruptedException e) {
+						otherUser = (RegisterClient) space.takeIfExists(template, null,
+								100);
+						if (otherUser != null) {
+							if (!list.contains(otherUser.getNickName()) && distanceBetween(client.getLatitude(), client.getLongitude(), otherUser.getLatitude(), otherUser.getLongitude())) {
+								list.add(otherUser.getNickName());
+								listRegister.add(otherUser);
+								client.getWindow().getTextAreaVision().append(otherUser.getNickName()+"\n");
+								System.out.println("O usuario " + otherUser.getNickName()
+										+ " foi inserido na lista.");
+							}
+						}
+					} catch (Exception e) {
+						System.out.println("Erro aqui" + e);
 						e.printStackTrace();
 					}
-					if (user != null) {
-						if (!list.containsKey(user.sender)) {
-							System.out.println("Foi inserido o usuario "
-									+ user.sender);
-							list.put(user.sender, "online");
-						}
+				} while (otherUser != null);
+				System.out.println("Fim da Lista com " + listRegister.size() + " elementos");
+				
+				for (int index = 0; index < listRegister.size(); index++ ) {
+					try {
+						space.write(listRegister.get(index), null, Lease.FOREVER);
+						System.out.println("Foi reintroduzido: " + listRegister.get(index).getNickName());
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					} catch (TransactionException e) {
+						e.printStackTrace();
 					}
-				} while (user != null);
+				}
 			}
 		}
 		
 		
+	}
+
+	public void disconnect() {
+		Message template = new Message();
+		template.setSender(this.client.getNickName());
+		template.setReceiver(null);
+			try {
+				space.takeIfExists(template, null,
+						Long.MAX_VALUE);
+				System.out.println("Usuario removido do espaco");
+			} catch (Exception e) {
+				System.out.println("Erro aqui" + e);
+				e.printStackTrace();
+			}
 	}
 	
 }

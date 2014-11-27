@@ -13,17 +13,15 @@ import javax.swing.ScrollPaneConstants;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JButton;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.util.TreeMap;
+import javax.swing.border.LineBorder;
+import java.awt.Color;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class Chat {
 
@@ -32,11 +30,12 @@ public class Chat {
 	private JTextArea textAreaTextToSend;
 	private JTextArea textAreaChat;
 	private JTextField textFieldNick;
-	private JTable table;
-	private DefaultTableModel model;
-	private String receiver;
 	private JButton btnConectar;
 	private JButton btnEnviar;
+	private JTextField textFieldReceiver;
+	private JTextField textField;
+	private JTextField textField_1;
+	private JTextArea textAreaVision;
 
 	/**
 	 * Launch the application.
@@ -67,13 +66,19 @@ public class Chat {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 550, 500);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				clientChat.disconnect();
+			}
+		});
+		frame.setBounds(100, 100, 712, 411);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
 		JPanel panelMsg = new JPanel();
 		panelMsg.setBorder(new TitledBorder(null, "Mensagens", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panelMsg.setBounds(10, 92, 360, 267);
+		panelMsg.setBounds(182, 22, 262, 222);
 		frame.getContentPane().add(panelMsg);
 		panelMsg.setLayout(null);
 
@@ -82,14 +87,14 @@ public class Chat {
 		textAreaChat.setBounds(10, 23, 280, 266);
 
 		JScrollPane scrollPaneAreaChat = new JScrollPane(textAreaChat);
-		scrollPaneAreaChat.setBounds(10, 23, 338, 233);
+		scrollPaneAreaChat.setBounds(10, 23, 240, 184);
 		scrollPaneAreaChat.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		panelMsg.add(scrollPaneAreaChat);
 
 
 		JPanel panelTxtMsg = new JPanel();
 		panelTxtMsg.setBorder(new TitledBorder(null, "Digite sua mensagem:", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panelTxtMsg.setBounds(10, 373, 390, 80);
+		panelTxtMsg.setBounds(182, 256, 266, 118);
 		frame.getContentPane().add(panelTxtMsg);
 		panelTxtMsg.setLayout(null);
 
@@ -100,7 +105,7 @@ public class Chat {
 			public void keyReleased(KeyEvent arg0) {
 				if (arg0.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (textAreaTextToSend.getText().length() > 1) {
-						clientChat.sendMessage(null, textAreaTextToSend.getText());
+						clientChat.sendMessage(textFieldReceiver.getText(), textAreaTextToSend.getText());
 						textAreaChat.append("eu: " + textAreaTextToSend.getText());
 					}
 					textAreaTextToSend.setText(null);
@@ -110,13 +115,22 @@ public class Chat {
 		textAreaTextToSend.setBounds(10, 22, 280, 47);
 
 		JScrollPane scrollPaneText = new JScrollPane(textAreaTextToSend);
-		scrollPaneText.setBounds(10, 22, 370, 47);
+		scrollPaneText.setBounds(12, 59, 242, 47);
 		scrollPaneText.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		panelTxtMsg.add(scrollPaneText);
+		
+		JLabel lblPara = new JLabel("Para:");
+		lblPara.setBounds(12, 25, 70, 15);
+		panelTxtMsg.add(lblPara);
+		
+		textFieldReceiver = new JTextField();
+		textFieldReceiver.setBounds(61, 28, 114, 19);
+		panelTxtMsg.add(textFieldReceiver);
+		textFieldReceiver.setColumns(10);
 
 		JPanel panel = new JPanel();
 		panel.setBorder(new TitledBorder(null, "Dados do Usu\u00E1rio", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel.setBounds(10, 10, 360, 71);
+		panel.setBounds(460, 26, 238, 140);
 		frame.getContentPane().add(panel);
 		panel.setLayout(null);
 
@@ -126,24 +140,6 @@ public class Chat {
 		textFieldNick.setToolTipText("NickName");
 		panel.add(textFieldNick);
 
-		String[] latitudeArray = new String[361];
-		for (int i = 0, j = 180; i < 361; i++, j--) {
-			latitudeArray[i] = "" + j;
-		}
-		JComboBox comboBoxLatitude = new JComboBox(latitudeArray);
-		comboBoxLatitude.setBounds(234, 35, 50, 25);
-		comboBoxLatitude.setSelectedIndex(180);
-		panel.add(comboBoxLatitude);
-
-		String[] longitudeArray = new String[181];
-		for (int i = 0, j = 90; i < 181; i++, j--) {
-			longitudeArray[i] = "" + j;
-		}
-		JComboBox comboBoxLongitude = new JComboBox(longitudeArray);
-		comboBoxLongitude.setBounds(296, 35, 50, 25);
-		comboBoxLongitude.setSelectedIndex(90);
-		panel.add(comboBoxLongitude);
-
 		btnConectar = new JButton("Conectar");
 		btnConectar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -152,8 +148,6 @@ public class Chat {
 				btnEnviar.setEnabled(true);
 				clientChat.setNickName(textFieldNick.getText());
 				clientChat.initServices();
-				refreshTable();
-				new Thread(new ScheduledTask()).start();
 			}
 		});
 		btnConectar.setBounds(124, 35, 98, 25);
@@ -162,49 +156,58 @@ public class Chat {
 		JLabel lblNickname = new JLabel("Nickname:");
 		lblNickname.setBounds(20, 23, 73, 15);
 		panel.add(lblNickname);
-
-		JLabel lblLong = new JLabel("Long.");
-		lblLong.setBounds(234, 10, 40, 15);
-		panel.add(lblLong);
-
-		JLabel lblLat = new JLabel("Latit.");
-		lblLat.setBounds(302, 10, 38, 15);
+		
+		textField = new JTextField();
+		textField.setText("0");
+		textField.setBounds(124, 109, 45, 19);
+		panel.add(textField);
+		textField.setColumns(10);
+		
+		textField_1 = new JTextField();
+		textField_1.setText("0");
+		textField_1.setBounds(177, 109, 45, 19);
+		panel.add(textField_1);
+		textField_1.setColumns(10);
+		
+		JLabel lblLat = new JLabel("Lat.");
+		lblLat.setBounds(124, 82, 45, 15);
 		panel.add(lblLat);
-
-		JPanel panelUsers = new JPanel();
-		panelUsers.setBorder(new TitledBorder(null, "Usu\u00E1rios Online", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panelUsers.setBounds(382, 11, 154, 348);
-		frame.getContentPane().add(panelUsers);
-		panelUsers.setLayout(null);
-
-		model = new DefaultTableModel(
-				new Object[][] {
-				},
-				new String[] {
-						"Usu\u00E1rio", "Status"
-				}
-				);
-
-		table = new JTable();
-		table.addMouseListener(new MouseAdapter() {
-
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				int row = table.getSelectedRow();
-				receiver = model.getValueAt(row, 0).toString();
+		
+		JLabel lblLong = new JLabel("Long.");
+		lblLong.setBounds(177, 82, 49, 15);
+		panel.add(lblLong);
+		
+		JButton btnLocalizao = new JButton("Mudar Local");
+		btnLocalizao.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				clientChat.changeLocation(textField.getText(),textField_1.getText());
 			}
 		});
-		table.setModel(model);
-		table.setBounds(10, 25, 134, 312);
+		btnLocalizao.setBounds(12, 82, 100, 49);
+		panel.add(btnLocalizao);
 
-		JScrollPane scrollPane = new JScrollPane(table);
-		scrollPane.setBounds(10, 25, 134, 312);
-		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-		panelUsers.add(scrollPane);
+		JPanel panelVision = new JPanel();
+		panelVision.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Campo de vis\u00E3o", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panelVision.setBounds(20, 12, 154, 362);
+		frame.getContentPane().add(panelVision);
+		panelVision.setLayout(null);
+		
+		setTextAreaVision(new JTextArea());
+		getTextAreaVision().setBounds(12, 22, 130, 328);
+		panelVision.add(getTextAreaVision());
 
 		btnEnviar = new JButton("Enviar");
+		btnEnviar.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (textAreaTextToSend.getText().length() > 1) {
+					clientChat.sendMessage(textFieldReceiver.getText(), textAreaTextToSend.getText());
+					textAreaChat.append("eu: " + textAreaTextToSend.getText());
+				}
+				textAreaTextToSend.setText(null);
+			}
+		});
 		btnEnviar.setEnabled(false);
-		btnEnviar.setBounds(412, 406, 77, 25);
+		btnEnviar.setBounds(460, 302, 77, 25);
 		frame.getContentPane().add(btnEnviar);
 		
 	}
@@ -222,37 +225,13 @@ public class Chat {
 	public void setTextAreaChat(JTextArea textAreaChat) {
 		this.textAreaChat = textAreaChat;
 	}
-	/**
-	 * 
-	 */
-	private void refreshTable() {
 
-		TreeMap<String, String> list = clientChat.getListContacts();
-		int count = model.getRowCount();
-		for (int i = count-1; i >= 0; i--) {
-			model.removeRow(i);
-		}
-		for (String key : list.keySet()) {
-			String [] values = {key, list.get(key)};
-
-			model.addRow(values);
-		}
-
+	public JTextArea getTextAreaVision() {
+		return textAreaVision;
 	}
-	/**
-	 * @author Lucas Diego Reboucas Rocha
-	 *
-	 */
-	private class ScheduledTask implements Runnable {
-		public void run() {
-			while (true) {
-				try {
-					Thread.sleep(30*1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				refreshTable();
-			}
-		}
+
+	public void setTextAreaVision(JTextArea textAreaVision) {
+		this.textAreaVision = textAreaVision;
+		textAreaVision.setEditable(false);
 	}
 }

@@ -17,13 +17,11 @@ public class ClientChat {
 	private Reader reader;
 	private Writer writer;
 	private Chat window;
-	private TreeMap<String, Integer> listContacts;
 	
 	public ClientChat(Chat window) {
 		this.latitude = new Float(0);
 		this.longitude = new Float(0);
-		this.window = window;
-		this.listContacts = new TreeMap<String, Integer>();
+		this.setWindow(window);
 	}
 
 	public void initServices() {
@@ -82,12 +80,26 @@ public class ClientChat {
 	}
 	
 	public void showMessage(Message msg) {
-		this.window.getTextAreaChat().append(msg.getDate().getHours() + ":"+ msg.getDate().getMinutes() +":" + msg.getDate().getSeconds() +" - " + msg.getSender() + ": " + msg.getMessage());
-		this.window.getTextAreaChat().setCaretPosition(this.window.getTextAreaChat().getDocument().getLength());
+		this.getWindow().getTextAreaChat().append(msg.getDate().getHours() + ":"+ msg.getDate().getMinutes() +":" + msg.getDate().getSeconds() +" - " + msg.getSender() + ": " + msg.getMessage());
+		this.getWindow().getTextAreaChat().setCaretPosition(this.getWindow().getTextAreaChat().getDocument().getLength());
 	}
 
-	public TreeMap<String, String> getListContacts() {
-		return this.reader.getListContacts();
+	public Chat getWindow() {
+		return window;
 	}
+
+	public void setWindow(Chat window) {
+		this.window = window;
+	}
+
+	public void disconnect() {
+		this.reader.disconnect();
+	}
+
+	public void changeLocation(String text, String text2) {
+		this.writer.changeLocation(text,text2);
+		
+	}
+
 	
 }

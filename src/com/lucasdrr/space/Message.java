@@ -20,7 +20,6 @@ public class Message implements Entry{
 	public Float latitude;
 	public Float longitude;
 	public Date date;
-	private Integer register;
 
 	public Message() {
 	}
@@ -109,11 +108,4 @@ public class Message implements Entry{
 		this.date = date;
 	}
 
-	public Integer getRegister() {
-		return register;
-	}
-
-	public void setRegister(Integer register) {
-		this.register = register;
-	}
 }
